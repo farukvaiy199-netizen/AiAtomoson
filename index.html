@@ -1,857 +1,819 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>স্মার্ট স্ট্রিম প্রো – মোবাইল ওবিএস ও স্ট্রিমিং সেন্টার</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Hind Siliguri', sans-serif;
-            background-color: #080b11;
-            color: #e5e7eb;
-            user-select: none;
-        }
-        .stream-preview {
-            background: #000;
-            aspect-ratio: 16 / 9;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid #1e293b;
-        }
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .active-tab {
-            color: #3b82f6;
-            border-bottom: 2px solid #3b82f6;
-        }
-        input[type="range"] {
-            accent-color: #3b82f6;
-        }
-        /* চ্যাট স্ক্রোল ইফেক্ট */
-        #chat-area::-webkit-scrollbar {
-            width: 4px;
-        }
-        #chat-area::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 2px;
-        }
-        
-        /* ড্র্যাগেবল এলিমেন্টের জন্য কার্সর ও স্টাইল */
-        .draggable-source {
-            position: absolute;
-            cursor: move;
-            transform-origin: center center;
-            touch-action: none; /* মোবাইলে ব্রাউজার স্ক্রোলিং ব্লক করার জন্য */
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Khan Sports Studio</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#141b24; --panel-2:#1b2430;
+    --accent:#f5a623; --accent-2:#1fb6a4; --text:#e8edf2; --text-dim:#7c8896;
+    --danger:#e5484d; --line:#26313d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif; overscroll-behavior:none;}
+  h1,h2,h3{font-family:'Arial Black',system-ui,sans-serif; letter-spacing:0.5px; margin:0;}
+  .app{display:flex; flex-direction:column; height:100vh; height:100dvh; max-width:520px; margin:0 auto; position:relative;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:10px 14px;
+    background:var(--panel); border-bottom:1px solid var(--line); z-index:5;}
+  .brand{display:flex; align-items:center; gap:8px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);}
+  .brand span{font-weight:800; font-size:15px; letter-spacing:1px;}
+  .status{font-size:11px; color:var(--text-dim); font-family:monospace;}
+
+  .stage{position:relative; flex:1; background:#000; overflow:hidden; touch-action:none;}
+  video{width:100%; height:100%; object-fit:cover; display:block; visibility:hidden;}
+  canvas.filter-canvas{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;}
+
+  .web-overlay{position:absolute; inset:0; width:100%; height:100%; border:0; z-index:2; background:#000; display:none;}
+  .web-overlay.on{display:block;}
+
+  .mode-badge{position:absolute; top:20px; left:50%; transform:translateX(-50%); background:rgba(31,182,164,.9);
+    padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; display:none; z-index:3;}
+  .mode-badge.on{display:block;}
+  .rec-dot{position:absolute; top:20px; right:20px; display:none; align-items:center; gap:6px;
+    background:rgba(13,17,23,.75); padding:5px 10px; border-radius:20px; font-size:11px; font-family:monospace; z-index:3;}
+  .rec-dot.on{display:flex;}
+  .rec-dot .pulse{width:8px;height:8px;border-radius:50%;background:var(--danger); animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1} 50%{opacity:.3}}
+
+  .placeholder{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; text-align:center; padding:30px; color:var(--text-dim); z-index:4;}
+  .placeholder .row2{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .tabs{display:flex; background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .tab{flex:1; padding:10px 2px; text-align:center; font-size:11px; color:var(--text-dim); font-weight:700;
+    border:none; background:none; border-bottom:2px solid transparent;}
+  .tab.active{color:var(--accent); border-bottom-color:var(--accent);}
+
+  .controls{background:var(--panel); padding:14px 16px 18px; max-height:38vh; overflow-y:auto;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .row label{width:88px; font-size:12.5px; color:var(--text-dim); flex-shrink:0;}
+  .row input[type=range]{flex:1; accent-color:var(--accent);}
+  .row .val{width:38px; font-size:11px; font-family:monospace; text-align:right; color:var(--accent);}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .chip{padding:7px 13px; border-radius:20px; border:1px solid var(--line); background:var(--panel-2);
+    color:var(--text); font-size:12px; font-weight:600;}
+  .chip.active{background:var(--accent); color:#1a1200; border-color:var(--accent);}
+  .textinput{width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2);
+    color:var(--text); font-size:13px; margin-bottom:10px;}
+  .hint{font-size:11px; color:var(--text-dim); margin-top:-6px; margin-bottom:12px; line-height:1.5;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .divider{border-top:1px dashed var(--line); margin:14px 0;}
+
+  .actionbar{display:flex; align-items:center; justify-content:center; gap:18px; padding:14px;
+    background:var(--panel); border-top:1px solid var(--line);}
+  .btn{border:none; cursor:pointer; font-weight:700; border-radius:10px; padding:10px 16px; font-size:13px; color:var(--text); background:var(--panel-2); border:1px solid var(--line);}
+  .btn.primary{background:var(--accent); color:#1a1200;}
+  .shutter{width:64px;height:64px;border-radius:50%; background:var(--accent); border:4px solid #fff2; cursor:pointer; flex-shrink:0;}
+  .shutter.recording{background:var(--danger); border-radius:16px; width:34px; height:34px; margin:15px;}
+  .side-btn{display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--text-dim); font-size:10px; background:none; border:none;}
+  .side-btn .ic{width:38px;height:38px;border-radius:50%;background:var(--panel-2); display:flex; align-items:center; justify-content:center; font-size:17px;}
+  .side-btn.sharing .ic{background:var(--accent-2); color:#04231f;}
+
+  ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+</style>
 </head>
-<body class="pb-24">
+<body>
+<div class="app">
 
-    <div id="fb-root"></div>
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/bn_IN/sdk.js#xfbml=1&version=v18.0"></script>
+  <div class="topbar">
+    <div class="brand"><div class="dot"></div><span>KHAN SPORTS STUDIO</span></div>
+    <div class="status" id="statusText">ক্যামেরা বন্ধ</div>
+  </div>
 
-    <header class="glass-panel sticky top-0 z-50 px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-            <div class="bg-red-600 w-3 h-3 rounded-full animate-pulse"></div>
-            <h1 class="text-md font-bold text-white tracking-wide">স্মার্ট স্ট্রিম প্রো <span class="text-xs text-blue-400 font-normal">v2.0 Beta</span></h1>
-        </div>
-        <div class="flex space-x-2">
-            <button id="btn-live" onclick="toggleLiveStream()" class="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1 shadow-lg shadow-red-600/20 transition-all">
-                <i class="fa-solid fa-satellite-dish"></i> <span id="live-text">গো লাইভ</span>
-            </button>
-        </div>
-    </header>
+  <div class="stage" id="stage">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="filterCanvas" class="filter-canvas"></canvas>
+    <iframe
+      id="webOverlay"
+      class="web-overlay"
+      sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-modals allow-presentation"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen>
+    </iframe>
+    <div class="mode-badge" id="modeBadge"></div>
+    <div class="rec-dot" id="recDot"><div class="pulse"></div><span id="recTime">00:00</span></div>
+    <div class="placeholder" id="placeholder">
+      <h2>সোর্স বাছাই করুন</h2>
+      <p style="font-size:13px; max-width:280px;">নিচের বাটনে চাপ দিলে ব্রাউজার পারমিশন চাইবে — অনুমতি দিন।</p>
+      <div class="row2">
+        <button class="btn primary" id="startBtn">📷 ক্যামেরা</button>
+        <button class="btn" id="startScreenBtnPh">🖥️ স্ক্রিন শেয়ার</button>
+        <button class="btn" id="startVideoBtnPh">🎞️ গ্যালারি ভিডিও</button>
+      </div>
+    </div>
+  </div>
 
-    <section class="p-3">
-        <div class="stream-preview rounded-2xl shadow-2xl shadow-black/50" id="canvas-container">
-            <div id="preview-container" class="absolute inset-0 w-full h-full">
-                <canvas id="studioCanvas" class="draggable-source w-full h-full object-cover rounded-2xl"></canvas>
-                <div id="fbPlayerContainer" class="draggable-source absolute inset-0 w-full h-full flex items-center justify-center bg-black hidden"></div>
-                <iframe id="videoIframe" class="draggable-source absolute inset-0 w-full h-full rounded-2xl hidden" frameborder="0" allow="autoplay; encrypted-media;" allowfullscreen></iframe>
-            </div>
-            
-            <div id="overlay-text-layer" class="absolute top-3 left-3 bg-black/60 px-2 py-0.5 rounded text-[10px] text-green-400 border border-green-500/30 hidden z-10">
-                🔴 LIVE | <span id="stream-timer">00:00:00</span>
-            </div>
-            <div id="overlay-banner" class="absolute bottom-2 left-0 right-0 text-center bg-blue-600/80 py-1 text-xs font-semibold text-white hidden z-10">
-                আমাদের channel-টি সাবস্ক্রাইব করুন!
-            </div>
-            
-            <div id="html-text-overlay" class="absolute top-5 right-5 space-y-1 pointer-events-none z-20 hidden text-right">
-                <div id="html-title" class="bg-black/70 px-3 py-1 text-white font-bold text-sm rounded inline-block"></div><br>
-                <div id="html-desc" class="bg-black/60 px-3 py-0.5 text-blue-400 text-xs rounded inline-block"></div>
-            </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="filter">ফিল্টার</button>
+    <button class="tab" data-tab="voice">ভয়েস</button>
+    <button class="tab" data-tab="overlay">ওভারলে</button>
+    <button class="tab" data-tab="source">সোর্স</button>
+    <button class="tab" data-tab="stream">স্ট্রিম</button>
+  </div>
 
-            <div id="live-chat-overlay" class="absolute bottom-8 left-3 w-48 h-24 bg-black/40 rounded-xl p-1.5 text-[10px] overflow-hidden pointer-events-none hidden z-20 border border-white/5">
-                <div id="chat-area" class="h-full overflow-y-auto space-y-1 flex flex-col justify-end">
-                    <div class="animate-pulse text-gray-400">লাইভ চ্যাট সংযুক্ত হচ্ছে...</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-2 bg-slate-900/60 p-2 rounded-xl border border-gray-800 flex items-center justify-between text-xs">
-            <span class="text-gray-400"><i class="fa-solid fa-maximize text-blue-400 mr-1"></i>ভিডিও সাইজ (Zoom):</span>
-            <input type="range" id="video-scale-slider" min="0.5" max="2" step="0.05" value="1" class="w-2/3" oninput="updateVideoScale(this.value)">
-            <button onclick="resetVideoPosition()" class="bg-slate-800 px-2 py-1 rounded text-[11px] text-gray-300 border border-gray-700">রিসেট</button>
-        </div>
-    </section>
-
-    <div class="glass-panel mx-3 rounded-xl flex justify-around text-xs font-semibold text-gray-400 border border-gray-800">
-        <button onclick="switchTab('source')" id="tab-source" class="py-2.5 px-2 active-tab"><i class="fa-solid fa-video mr-1"></i>সোর্স</button>
-        <button onclick="switchTab('video')" id="tab-video" class="py-2.5 px-2"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>ভিডিও এফেক্ট</button>
-        <button onclick="switchTab('audio')" id="tab-audio" class="py-2.5 px-2"><i class="fa-solid fa-microphone-lines mr-1"></i>অডিও মিক্স</button>
-        <button onclick="switchTab('tools')" id="tab-tools" class="py-2.5 px-2"><i class="fa-solid fa-gear mr-1"></i>স্ট্রিমিং/টুলস</button>
+  <div class="controls">
+    <div class="panel active" id="panel-filter">
+      <div class="row"><label>ব্রাইটনেস</label><input type="range" id="rBrightness" min="50" max="150" value="100"><span class="val" id="vBrightness">100</span></div>
+      <div class="row"><label>কনট্রাস্ট</label><input type="range" id="rContrast" min="50" max="150" value="100"><span class="val" id="vContrast">100</span></div>
+      <div class="row"><label>স্যাচুরেশন</label><input type="range" id="rSaturate" min="0" max="200" value="100"><span class="val" id="vSaturate">100</span></div>
+      <div class="row"><label>ওয়ার্মথ</label><input type="range" id="rWarm" min="-50" max="50" value="0"><span class="val" id="vWarm">0</span></div>
+      <div class="chips">
+        <div class="chip active" data-lut="none">নরমাল</div>
+        <div class="chip" data-lut="cinematic">সিনেমাটিক</div>
+        <div class="chip" data-lut="vivid">ভিভিড</div>
+        <div class="chip" data-lut="bw">ব্ল্যাক অ্যান্ড হোয়াইট</div>
+        <div class="chip" data-lut="cool">কুল টোন</div>
+      </div>
+      <div class="hint">সব সোর্সে (ক্যামেরা/স্ক্রিন/ভিডিও) একই ফিল্টার কাজ করে এবং রেকর্ডিং-এ যুক্ত থাকে।</div>
     </div>
 
-    <main class="p-3 max-w-md mx-auto space-y-4">
-        
-        <section id="panel-source" class="tab-panel space-y-3">
-            <div class="glass-panel p-4 rounded-xl space-y-3">
-                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider"><i class="fa-solid fa-layer-group text-blue-500 mr-1.5"></i>ইনপুট ও স্ক্রিন শেয়ারিং সোর্স</h3>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="startCamera()" id="btn-cam" class="bg-slate-800/80 hover:bg-slate-800 p-3 rounded-xl flex flex-col items-center justify-center space-y-1.5 border border-gray-700/50">
-                        <i class="fa-solid fa-camera text-xl text-blue-400"></i>
-                        <span class="text-xs font-medium">ফেসক্যাম অন</span>
-                    </button>
-                    <button onclick="startScreenShare()" id="btn-screen" class="bg-slate-800/80 hover:bg-slate-800 p-3 rounded-xl flex flex-col items-center justify-center space-y-1.5 border border-gray-700/50">
-                        <i class="fa-solid fa-mobile-screen-button text-xl text-emerald-400"></i>
-                        <span class="text-xs font-medium">স্ক্রিন শেয়ার লাইভ</span>
-                    </button>
-                </div>
-
-                <div class="space-y-3 pt-2 border-t border-gray-800">
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">এক্সটার্নাল খেলার লিংক (HLS/M3U8/Embed/FB/YT)</label>
-                        <div class="flex space-x-2">
-                            <input type="text" id="stream-link-input" placeholder="পাবলিক ফেসবুক বা যেকোনো ভিডিও লিংক পেস্ট করুন" class="w-full bg-slate-900/80 rounded-xl p-2.5 text-xs text-white border border-gray-700 focus:outline-none focus:border-blue-500">
-                            <button onclick="addExternalStream()" class="bg-blue-600 hover:bg-blue-700 px-4 rounded-xl text-xs font-bold text-white whitespace-nowrap">প্লে করুন</button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">ভিডিও টাইটেল (Title Overlay)</label>
-                            <input type="text" id="video-title-input" placeholder="লাইভ খেলা দেখুন..." oninput="updateOverlayText()" class="w-full bg-slate-900/80 rounded-xl p-2 text-xs text-white border border-gray-700 focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">ডেসক্রিপশন (Description)</label>
-                            <input type="text" id="video-desc-input" placeholder="আজকের ম্যাচ লাইভ" oninput="updateOverlayText()" class="w-full bg-slate-900/80 rounded-xl p-2 text-xs text-white border border-gray-700 focus:outline-none focus:border-blue-500">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="panel-video" class="tab-panel space-y-3 hidden">
-            <div class="glass-panel p-4 rounded-xl space-y-4">
-                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider"><i class="fa-solid fa-sliders text-purple-500 mr-1.5"></i>Real-time Color Correction (LUTs)</h3>
-                <div class="space-y-3 text-xs">
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <span class="text-gray-400">ব্রাইটনেস (Brightness)</span>
-                            <span id="val-bright" class="text-blue-400">100%</span>
-                        </div>
-                        <input type="range" min="50" max="150" value="100" class="w-full" oninput="updateVideoFilter('brightness', this.value)">
-                    </div>
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <span class="text-gray-400">কনট্রাস্ট (Contrast)</span>
-                            <span id="val-contrast" class="text-blue-400">100%</span>
-                        </div>
-                        <input type="range" min="50" max="150" value="100" class="w-full" oninput="updateVideoFilter('contrast', this.value)">
-                    </div>
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <span class="text-gray-400">স্যাচুরেশন (Saturation)</span>
-                            <span id="val-saturate" class="text-blue-400">100%</span>
-                        </div>
-                        <input type="range" min="0" max="200" value="100" class="w-full" oninput="updateVideoFilter('saturate', this.value)">
-                    </div>
-                </div>
-
-                <div class="border-t border-gray-800 pt-3 space-y-2">
-                    <span class="block text-xs text-gray-400">এআই ফিল্টার ও ব্যাকগ্রাউন্ড কন্ট্রোল</span>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="toggleChromaKey()" id="btn-chroma" class="bg-slate-800/60 p-2 rounded-lg border border-gray-700 text-center transition-all">💚 গ্রিন স্ক্রিন / ক্রোমা-কী</button>
-                        <button onclick="toggleBeautyFilter()" id="btn-beauty" class="bg-slate-800/60 p-2 rounded-lg border border-gray-700 text-center transition-all">✨ বিউটি ফেস গ্লো AI</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="panel-audio" class="tab-panel space-y-3 hidden">
-            <div class="glass-panel p-4 rounded-xl space-y-4">
-                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider"><i class="fa-solid fa-microphone-lines text-emerald-500 mr-1.5"></i>রিয়েল-টাইম অডিও মিক্সার</h3>
-                <div class="space-y-3 text-xs">
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <span class="text-gray-400"><i class="fa-solid fa-microphone mr-1 text-blue-400"></i>মাইক্রোফোন ইনপুট ভলিউম</span>
-                            <span id="val-mic" class="text-emerald-400">৮০%</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="80" class="w-full" oninput="updateAudioVolume('mic', this.value)">
-                    </div>
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <span class="text-gray-400"><i class="fa-solid fa-gamepad mr-1 text-emerald-400"></i>অভ্যন্তরীণ/সোর্স মিউজিক সাউন্ড</span>
-                            <span id="val-internal" class="text-emerald-400">৫০%</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="50" class="w-full" oninput="updateAudioVolume('internal', this.value)">
-                    </div>
-                </div>
-
-                <div class="border-t border-gray-800 pt-3 space-y-2">
-                    <span class="block text-xs text-gray-400">Real-time Voice Changer (ভয়েস এফেক্ট)</span>
-                    <select id="voice-effect-select" onchange="setVoiceEffect(this.value)" class="w-full bg-slate-900 rounded-lg p-2 text-xs border border-gray-700 text-white focus:outline-none">
-                        <option value="normal">🎤 নরমাল ভয়েস (Normal Original)</option>
-                        <option value="robot">🤖 রোবট ভয়েস (Robot AI Effect)</option>
-                        <option value="chipmunk">🐿️ চিপমাঙ্ক / কার্টুন হাই-পিচ</option>
-                        <option value="deep">🧔 ডিপ ভয়েস / ভারী কন্ঠ</option>
-                        <option value="echo">📻 ইকো এফেক্ট (Echo Studio)</option>
-                    </select>
-                </div>
-
-                <div class="pt-2">
-                    <button onclick="toggleNoiseCancellation()" id="btn-noise" class="w-full bg-slate-800/60 p-2.5 rounded-lg border border-gray-700 text-xs text-center">
-                        🔇 নয়েজ ক্যান্সেলেশন (Background Noise Filter): <span class="text-red-400 font-bold" id="noise-status">বন্ধ</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <section id="panel-tools" class="tab-panel space-y-3 hidden">
-            <div class="glass-panel p-4 rounded-xl space-y-4">
-                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider"><i class="fa-solid fa-server text-amber-500 mr-1.5"></i>RTMP মাল্টি-স্ট্রিমিং কনফিগারেশন</h3>
-                <div class="space-y-3 text-xs">
-                    <div>
-                        <label class="block text-gray-400 mb-1">ইউটিউব RTMP URL / Stream Key</label>
-                        <input type="text" value="rtmp://a.rtmp.youtube.com/live2/xxxx-xxxx" class="w-full bg-slate-900 rounded-xl p-2.5 text-white border border-gray-700 focus:outline-none text-[11px]">
-                    </div>
-                    <div>
-                        <label class="block text-gray-400 mb-1">ফেসবুক RTMP URL / Stream Key</label>
-                        <input type="text" value="rtmps://live-api-s.facebook.com:443/rtmp/xxxx-xxxx" class="w-full bg-slate-900 rounded-xl p-2.5 text-white border border-gray-700 focus:outline-none text-[11px]">
-                    </div>
-                </div>
-
-                <div class="border-t border-gray-800 pt-3 space-y-2">
-                    <span class="block text-xs text-gray-400">কাস্টম ওভারলে এবং চ্যাট সেটিংস</span>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="toggleOverlay('watermark')" class="bg-slate-800/60 p-2 rounded-lg border border-gray-700 text-center">⏱️ লাইভ টাইমার সিঙ্ক</button>
-                        <button onclick="toggleOverlay('banner')" class="bg-slate-800/60 p-2 rounded-lg border border-gray-700 text-center">📢 টেক্সট ব্যানার যুক্ত করুন</button>
-                    </div>
-                    <button onclick="toggleOverlay('chat')" id="btn-chat-toggle" class="w-full bg-slate-800/60 p-2 rounded-lg border border-gray-700 text-xs text-center">
-                        💬 Live Chat Overlay: <span class="text-red-400 font-bold" id="chat-overlay-status">বন্ধ</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="glass-panel fixed bottom-0 left-0 right-0 p-3 flex justify-around text-center border-t border-gray-800 max-w-md mx-auto z-50">
-        <button onclick="triggerRecord()" id="btn-record" class="flex flex-col items-center text-xs text-gray-400 hover:text-white transition-all">
-            <i class="fa-solid fa-circle-dot text-lg text-rose-500 mb-1" id="record-icon"></i><span id="record-text">রেকর্ডিং শুরু</span>
-        </button>
-        <button onclick="simulateIncomingChats()" class="flex flex-col items-center text-xs text-gray-400 hover:text-white">
-            <i class="fa-solid fa-comments text-lg text-blue-400 mb-1"></i><span>টেস্ট কমেন্টস</span>
-        </button>
-    </footer>
-
-    <script>
-        // গ্লোবাল ভেরিয়েবল এবং কন্ট্রোল
-        let localStream = null;
-        let isStreaming = false;
-        let isRecording = false;
-        let mediaRecorder = null;
-        let recordedChunks = [];
-        let currentVideoElement = null;
-        
-        let videoTitle = "";
-        let videoDesc = "";
-        let chromaKeyActive = false;
-        let beautyFilterActive = false;
-        let timerInterval = null;
-
-        // কালার ফিল্টার ভেরিয়েবল
-        let bVal = 100, cVal = 100, sVal = 100;
-
-        // অডিও নোড ভেরিয়েবল (Web Audio API Engine)
-        let audioCtx = null;
-        let micSource = null;
-        let internalSource = null;
-        let micGainNode = null;
-        let internalGainNode = null;
-        let biquadFilter = null; 
-        let voiceWorkletNode = null; // রিয়েল-টাইম পিচ মড্যুলেশনের জন্য
-        let currentEffect = 'normal'; 
-        let pitchFactor = 1.0; // ডিফল্ট নরমাল পিচ ভ্যালু
-
-        const canvas = document.getElementById('studioCanvas');
-        const iframe = document.getElementById('videoIframe');
-        const fbContainer = document.getElementById('fbPlayerContainer');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 640;
-        canvas.height = 360;
-
-        // ড্র্যাগ অ্যান্ড ড্রপ পজিশন ট্র্যাকিং ভেরিয়েবলস
-        let isDragging = false;
-        let startX, startY;
-        let currentX = 0, currentY = 0;
-        let currentScale = 1;
-
-        function drawDefaultPlaceholder() {
-            ctx.fillStyle = "#111827";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = "16px Hind Siliguri";
-            ctx.fillStyle = "#4b5563";
-            ctx.textAlign = "center";
-            ctx.fillText("কোনো সোর্স সিলেক্ট করা নেই। পাবলিক ফেসবুক/ইউটিউব লিংক দিন বা ক্যামেরা অন করুন।", canvas.width / 2, canvas.height / 2);
-        }
-        drawDefaultPlaceholder();
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
-            document.querySelectorAll('#tab-source, #tab-video, #tab-audio, #tab-tools').forEach(btn => btn.classList.remove('active-tab'));
-            document.getElementById('panel-' + tabId).classList.remove('hidden');
-            document.getElementById('tab-' + tabId).classList.add('active-tab');
-        }
-
-        // অ্যাডভান্সড রিয়েল-টাইম পিচ শিফটার ম্যাথমেটিক্যাল ইঞ্জিন (ভয়েস এফেক্ট ফিক্সড)
-        function createPitchShifterNode(context) {
-            const bufferSize = 4096;
-            let node = context.createScriptProcessor(bufferSize, 1, 1);
-            
-            node.onaudioprocess = function(e) {
-                let inputBuffer = e.inputBuffer.getChannelData(0);
-                let outputBuffer = e.outputBuffer.getChannelData(0);
-                
-                if (currentEffect === 'normal') {
-                    for (let i = 0; i < inputBuffer.length; i++) {
-                        outputBuffer[i] = inputBuffer[i];
-                    }
-                    return;
-                }
-
-                // রোবট ভয়েস মড্যুলেশন আলগোরিদম
-                if (currentEffect === 'robot') {
-                    for (let i = 0; i < inputBuffer.length; i++) {
-                        outputBuffer[i] = inputBuffer[i] * Math.sin(i * 0.15);
-                    }
-                    return;
-                }
-
-                // ইকো স্টুডিও রিভার্ব ইফেক্ট
-                if (currentEffect === 'echo') {
-                    let delay = Math.floor(bufferSize * 0.25);
-                    for (let i = 0; i < inputBuffer.length; i++) {
-                        let oldSample = (i >= delay) ? inputBuffer[i - delay] * 0.4 : 0;
-                        outputBuffer[i] = inputBuffer[i] + oldSample;
-                    }
-                    return;
-                }
-
-                // চিপমাঙ্ক ও ডিপ ভয়েস ইন্টারপোলেশন মেকানিজম (Pitch Scaling)
-                let factor = pitchFactor;
-                for (let i = 0; i < outputBuffer.length; i++) {
-                    let sourceIndex = i * factor;
-                    let baseIndex = Math.floor(sourceIndex);
-                    let frac = sourceIndex - baseIndex;
-                    
-                    if (baseIndex + 1 < inputBuffer.length) {
-                        outputBuffer[i] = (1 - frac) * inputBuffer[baseIndex] + frac * inputBuffer[baseIndex + 1];
-                    } else if (baseIndex < inputBuffer.length) {
-                        outputBuffer[i] = inputBuffer[baseIndex];
-                    } else {
-                        outputBuffer[i] = 0;
-                    }
-                }
-            };
-            return node;
-        }
-
-        function initAudioEngine(stream, type) {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-
-            if (!voiceWorkletNode) {
-                voiceWorkletNode = createPitchShifterNode(audioCtx);
-            }
-
-            if (!biquadFilter) {
-                biquadFilter = audioCtx.createBiquadFilter();
-                biquadFilter.type = "lowpass";
-                biquadFilter.frequency.value = 20000;
-            }
-
-            if (type === 'mic') {
-                if(micSource) try { micSource.disconnect(); } catch(e){}
-                micSource = audioCtx.createMediaStreamSource(stream);
-                micGainNode = audioCtx.createGain();
-                micGainNode.gain.value = 0.8; 
-
-                micSource.connect(biquadFilter);
-                biquadFilter.connect(voiceWorkletNode);
-                voiceWorkletNode.connect(micGainNode);
-                micGainNode.connect(audioCtx.destination);
-            } else if (type === 'internal') {
-                if(internalSource) try { internalSource.disconnect(); } catch(e){}
-                internalSource = audioCtx.createMediaElementSource(stream);
-                internalGainNode = audioCtx.createGain();
-                internalGainNode.gain.value = 0.5; 
-                
-                internalSource.connect(voiceWorkletNode);
-                voiceWorkletNode.connect(internalGainNode);
-                internalGainNode.connect(audioCtx.destination);
-            }
-            
-            setVoiceEffect(currentEffect);
-        }
-
-        // ফেসক্যাম বা ফ্রন্ট摄像头 ইঞ্জিন
-        async function startCamera() {
-            try {
-                if(localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                }
-                localStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: true });
-                document.getElementById('btn-cam').classList.add('bg-blue-600');
-                
-                const video = document.createElement('video');
-                video.srcObject = localStream;
-                video.playsInline = true;
-                video.muted = true; 
-                video.play();
-                video.onloadedmetadata = () => {
-                    fbContainer.classList.add('hidden');
-                    iframe.classList.add('hidden');
-                    canvas.classList.remove('hidden');
-                    resetVideoPosition();
-                    renderMixer(video);
-                    initAudioEngine(localStream, 'mic');
-                };
-            } catch (err) {
-                alert("ক্যামেরা বা মাইক্রোফোন এক্সেস করা যায়নি।");
-            }
-        }
-
-        // ফোনের পুরো স্ক্রিন শেয়ারিং ও লাইভ ইঞ্জিন
-        async function startScreenShare() {
-            try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                document.getElementById('btn-screen').classList.add('bg-emerald-600');
-                
-                const video = document.createElement('video');
-                video.srcObject = screenStream;
-                video.playsInline = true;
-                video.muted = true;
-                video.play();
-                video.onloadedmetadata = () => {
-                    fbContainer.classList.add('hidden');
-                    iframe.classList.add('hidden');
-                    canvas.classList.remove('hidden');
-                    resetVideoPosition();
-                    renderMixer(video);
-                    initAudioEngine(screenStream, 'mic');
-                };
-            } catch (err) {
-                alert("স্ক্রিন শেয়ারিং পারমিশন বাতিল করা হয়েছে।");
-            }
-        }
-
-        // অল-ইন-ওয়ান ইউনিভার্সাল লিংক প্রসেসর (সর্বধরনের লিংকের জন্য আপডেট করা)
-        function addExternalStream() {
-            let link = document.getElementById('stream-link-input').value.trim();
-            if(!link) {
-                alert("অনুগ্রহ করে একটি সঠিক লিংক প্রবেশ করান!");
-                return;
-            }
-            
-            resetVideoPosition();
-
-            // ১. ফেসবুক সোর্স চেক
-            if(link.includes("facebook.com") || link.includes("fb.watch")) {
-                canvas.classList.add('hidden');
-                iframe.classList.add('hidden');
-                fbContainer.classList.remove('hidden');
-                fbContainer.innerHTML = `<div class="fb-video" data-href="${link}" data-width="640" data-show-text="false" data-autoplay="true" data-allowfullscreen="true"></div>`;
-                if (typeof FB !== 'undefined') {
-                    FB.XFBML.parse();
-                    alert("ফেসবুক অফিশিয়াল প্লেয়ার লোড হয়েছে।");
-                }
-                return;
-            }
-            
-            // ২. ইউটিউব সোর্স চেক
-            if(link.includes("youtube.com") || link.includes("youtu.be")) {
-                canvas.classList.add('hidden');
-                fbContainer.classList.add('hidden');
-                iframe.classList.remove('hidden');
-                let videoId = "";
-                if(link.includes("v=")) {
-                    videoId = link.split('v=')[1].split('&')[0];
-                } else {
-                    videoId = link.split('/').pop().split('?')[0];
-                }
-                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-                alert("ইউটিউব প্লেয়ার সক্রিয় হয়েছে।");
-                return;
-            }
-
-            // ৩. সরাসরি ভিডিও ফাইল এক্সটেনশন চেক (.mp4, .m3u8, .mp3, ইত্যাদি)
-            const isDirectVideo = /\.(mp4|m3u8|webm|ogg|mp3|mkv|mov)(\?.*)?$/i.test(link);
-            
-            if (isDirectVideo) {
-                fbContainer.classList.add('hidden');
-                iframe.classList.add('hidden');
-                canvas.classList.remove('hidden');
-                if (currentVideoElement) currentVideoElement.pause();
-
-                const video = document.createElement('video');
-                video.src = link;
-                video.crossOrigin = "anonymous"; 
-                video.loop = true;
-                video.muted = false; 
-                video.playsInline = true;
-
-                video.onloadedmetadata = () => {
-                    video.play();
-                    renderMixer(video);
-                    initAudioEngine(video, 'internal');
-                    alert("ভি디오 ফাইলটি সফলভাবে ক্যানভাস ও মিক্সারে লোড হয়েছে।");
-                };
-                
-                video.onerror = () => {
-                    // ডিরেক্ট সোর্সে ফেইল করলে ব্যাকআপ হিসেবে আইফ্রেমে ট্রাই করবে
-                    loadAsIframe(link);
-                };
-            } else {
-                // ৪. থার্ড পার্টি ওয়েব ও এমবেডেড লিংকের জন্য আইফ্রেম মোড (যেমন cricstreams বা অন্যান্য স্পোর্টস সাইট)
-                loadAsIframe(link);
-            }
-        }
-
-        // থার্ড পার্টি সাইট বা আইফ্রেম লোডার সাব-ফাংশন
-        function loadAsIframe(link) {
-            canvas.classList.add('hidden');
-            fbContainer.classList.add('hidden');
-            iframe.classList.remove('hidden');
-            iframe.src = link;
-            alert("লিংকটি ওয়েব প্লেয়ার মোডে আইফ্রেমে সফলভাবে লোড করা হয়েছে।");
-        }
-
-        function updateOverlayText() {
-            videoTitle = document.getElementById('video-title-input').value;
-            videoDesc = document.getElementById('video-desc-input').value;
-            
-            const htmlOverlay = document.getElementById('html-text-overlay');
-            if (videoTitle || videoDesc) {
-                htmlOverlay.classList.remove('hidden');
-                document.getElementById('html-title').innerText = videoTitle || "";
-                document.getElementById('html-desc').innerText = videoDesc || "";
-            } else {
-                htmlOverlay.classList.add('hidden');
-            }
-        }
-
-        // ক্যানভাস মিক্সার ইঞ্জিন
-        function renderMixer(videoElement) {
-            currentVideoElement = videoElement;
-            function drawFrame() {
-                if (currentVideoElement === videoElement && !videoElement.paused && !videoElement.ended) {
-                    
-                    let filterString = `brightness(${bVal}%) contrast(${cVal}%) saturate(${sVal}%)`;
-                    if (beautyFilterActive) {
-                        filterString += ` blur(0.5px) contrast(110%) brightness(105%)`; 
-                    }
-                    ctx.filter = filterString;
-
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    
-                    if (chromaKeyActive) {
-                        let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        let l = frame.data.length / 4;
-                        for (let i = 0; i < l; i++) {
-                            let r = frame.data[i * 4 + 0];
-                            let g = frame.data[i * 4 + 1];
-                            let b = frame.data[i * 4 + 2];
-                            if (g > 110 && g > r * 1.4 && g > b * 1.4) { 
-                                frame.data[i * 4 + 3] = 0; 
-                            }
-                        }
-                        ctx.filter = 'none'; 
-                        ctx.putImageData(frame, 0, 0);
-                    }
-                    
-                    requestAnimationFrame(drawFrame);
-                }
-            }
-            drawFrame();
-        }
-
-        // ভিডিও ফিল্টার স্লাইডার হ্যান্ডলার 
-        function updateVideoFilter(filterType, value) {
-            document.getElementById('val-' + filterType).innerText = value + '%';
-            if(filterType === 'brightness') bVal = value;
-            if(filterType === 'contrast') cVal = value;
-            if(filterType === 'saturate') sVal = value;
-
-            let cssFilterString = `brightness(${bVal}%) contrast(${cVal}%) saturate(${sVal}%)`;
-            if (beautyFilterActive) {
-                cssFilterString += ` blur(0.5px) contrast(110%) brightness(105%)`;
-            }
-            document.getElementById('preview-container').style.filter = cssFilterString;
-        }
-
-        function toggleChromaKey() {
-            chromaKeyActive = !chromaKeyActive;
-            const btn = document.getElementById('btn-chroma');
-            btn.classList.toggle('bg-green-600', chromaKeyActive);
-        }
-
-        function toggleBeautyFilter() {
-            beautyFilterActive = !beautyFilterActive;
-            const btn = document.getElementById('btn-beauty');
-            btn.classList.toggle('bg-purple-600', beautyFilterActive);
-            updateVideoFilter('brightness', bVal);
-        }
-
-        // অডিও মিক্সার ভলিউম কন্ট্রোল
-        function updateAudioVolume(type, value) {
-            document.getElementById('val-' + type).innerText = value + '%';
-            let gainValue = value / 100;
-            if (type === 'mic' && micGainNode) {
-                micGainNode.gain.value = gainValue;
-            } else if (type === 'internal' && internalGainNode) {
-                internalGainNode.gain.value = gainValue;
-            }
-        }
-
-        // রিয়েল-টাইম অডিও মড্যুলেটর সেট আপ
-        function setVoiceEffect(effect) {
-            currentEffect = effect; 
-            if (!audioCtx) return;
-            
-            if (effect === 'chipmunk') {
-                pitchFactor = 1.6; // হাই-পিচ কার্টুন ইফেক্ট
-            } else if (effect === 'deep') {
-                pitchFactor = 0.65; // ভারী এবং গভীর পুরুষ কণ্ঠ
-            } else {
-                pitchFactor = 1.0; 
-            }
-        }
-
-        // এআই নয়েজ কাস্টম ফিল্টার
-        function toggleNoiseCancellation() {
-            const status = document.getElementById('noise-status');
-            const btn = document.getElementById('btn-noise');
-            if(status.innerText === "বন্ধ") {
-                status.innerText = "চলমান (AI Active)";
-                status.className = "text-green-400 font-bold";
-                btn.classList.add('bg-emerald-950');
-                if (biquadFilter) biquadFilter.frequency.value = 3500; 
-            } else {
-                status.innerText = "বন্ধ";
-                status.className = "text-red-400 font-bold";
-                btn.classList.remove('bg-emerald-950');
-                if (biquadFilter) biquadFilter.frequency.value = 20000; 
-            }
-        }
-
-        // কাস্টম ওভারলে সেটিংস
-        function toggleOverlay(type) {
-            if(type === 'watermark') document.getElementById('overlay-text-layer').classList.toggle('hidden');
-            if(type === 'banner') document.getElementById('overlay-banner').classList.toggle('hidden');
-            if(type === 'chat') {
-                const overlay = document.getElementById('live-chat-overlay');
-                const status = document.getElementById('chat-overlay-status');
-                overlay.classList.toggle('hidden');
-                if(overlay.classList.contains('hidden')) {
-                    status.innerText = "বন্ধ";
-                    status.className = "text-red-400 font-bold";
-                } else {
-                    status.innerText = "স্ক্রিনে সচল";
-                    status.className = "text-green-400 font-bold";
-                }
-            }
-        }
-
-        // লাইভ চ্যাট সিমুলেশন
-        function simulateIncomingChats() {
-            const chatArea = document.getElementById('chat-area');
-            const names = ["Faruk", "Nabil", "Sabbir", "Rifat", "Asif"];
-            const msgs = ["খেলাটা একদম ক্লিয়ার দেখা যাচ্ছে!", "ধন্যবাদ লাইভ দেখানোর জন্য ভাই", "Wow 🔥", "অসাধারণ কোয়ালিটি", "শেয়ার করলাম ভাই"];
-            
-            chatArea.innerHTML = "";
-            let count = 0;
-            const chatInterval = setInterval(() => {
-                if(count > 4) { clearInterval(chatInterval); return; }
-                const div = document.createElement('div');
-                div.innerHTML = `<span class="text-blue-400 font-bold">${names[count]}:</span> <span class="text-gray-200">${msgs[count]}</span>`;
-                chatArea.appendChild(div);
-                chatArea.scrollTop = chatArea.scrollHeight;
-                count++;
-            }, 1500);
-        }
-
-        // RTMP লাইভ স্ট্রিম ও টাইমার কন্ট্রোলার
-        function toggleLiveStream() {
-            const btn = document.getElementById('btn-live');
-            const text = document.getElementById('live-text');
-            if(!isStreaming) {
-                isStreaming = true;
-                btn.className = "bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1 shadow-lg animate-pulse";
-                text.innerText = "স্টপ লাইভ";
-                startTimer();
-                alert("মাল্টি-স্ট্রিমিং (RTMP) প্রোটোকলের মাধ্যমে লাইভ সম্প্রচার শুরু হয়েছে।");
-            } else {
-                isStreaming = false;
-                btn.className = "bg-gradient-to-r from-red-600 to-rose-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1 shadow-lg";
-                text.innerText = "গো লাইভ";
-                stopTimer();
-                alert("লাইভ স্ট্রিম বন্ধ করা হয়েছে।");
-            }
-        }
-
-        function startTimer() {
-            let totalSeconds = 0;
-            const timerSpan = document.getElementById('stream-timer');
-            timerInterval = setInterval(() => {
-                totalSeconds++;
-                let hrs = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
-                let mins = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
-                let secs = (totalSeconds % 60).toString().padStart(2, '0');
-                timerSpan.innerText = `${hrs}:${mins}:${secs}`;
-            }, 1000);
-        }
-
-        function stopTimer() {
-            clearInterval(timerInterval);
-            document.getElementById('stream-timer').innerText = "00:00:00";
-        }
-
-        // ক্যানভাস ও মিক্সড অডিও রেকর্ড করার ইঞ্জিন
-        function triggerRecord() {
-            const rText = document.getElementById('record-text');
-            const rIcon = document.getElementById('record-icon');
-            
-            if (!isRecording) {
-                try {
-                    recordedChunks = [];
-                    const stream = canvas.captureStream(30);
-                    
-                    if (audioCtx) {
-                        const destination = audioCtx.createMediaStreamDestination();
-                        if (micGainNode) micGainNode.connect(destination);
-                        if (internalGainNode) internalGainNode.connect(destination);
-                        
-                        const audioTrack = destination.stream.getAudioTracks()[0];
-                        if(audioTrack) stream.addTrack(audioTrack);
-                    }
-
-                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-                    
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) recordedChunks.push(e.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(recordedChunks, { type: 'video/mp4' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `smart-stream-record-${Date.now()}.mp4`;
-                        a.click();
-                        alert("রেকর্ডিংটি সফলভাবে ডাউনলোড হয়েছে।");
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    rText.innerText = "রেকর্ডিং বন্ধ";
-                    rIcon.className = "fa-solid fa-square text-lg text-amber-500 mb-1";
-                    alert("স্ক্রিন ও লাইভ ম্যাচ রেকর্ডিং শুরু হয়েছে!");
-                } catch (err) {
-                    alert("রেকর্ডিং মেকানিজম চালু করা যায়নি।");
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                rText.innerText = "রেকর্ডিং শুরু";
-                rIcon.className = "fa-solid fa-circle-dot text-lg text-rose-500 mb-1";
-            }
-        }
-
-        /* -----------------------------------------------------------
-           ভিডিও ড্র্যাগ অ্যান্ড পজিশনিং
-        -------------------------------------------------------------- */
-        const previewContainer = document.getElementById('preview-container');
-
-        // টাচ এবং মাউস ইভেন্ট লিসেনার সেট করা
-        previewContainer.addEventListener('mousedown', dragStart);
-        previewContainer.addEventListener('mousemove', dragMove);
-        window.addEventListener('mouseup', dragEnd);
-
-        previewContainer.addEventListener('touchstart', dragStart, { passive: false });
-        previewContainer.addEventListener('touchmove', dragMove, { passive: false });
-        window.addEventListener('touchend', dragEnd);
-
-        function dragStart(e) {
-            isDragging = true;
-            if (e.type === 'touchstart') {
-                startX = e.touches[0].clientX - currentX;
-                startY = e.touches[0].clientY - currentY;
-            } else {
-                startX = e.clientX - currentX;
-                startY = e.clientY - currentY;
-            }
-        }
-
-        function dragMove(e) {
-            if (!isDragging) return;
-            e.preventDefault(); 
-
-            if (e.type === 'touchmove') {
-                currentX = e.touches[0].clientX - startX;
-                currentY = e.touches[0].clientY - startY;
-            } else {
-                currentX = e.clientX - startX;
-                currentY = e.clientY - startY;
-            }
-
-            applyTransform();
-        }
-
-        function dragEnd() {
-            isDragging = false;
-        }
-
-        // সাইজ জুম বা স্কেল করার ফাংশন
-        function updateVideoScale(val) {
-            currentScale = val;
-            applyTransform();
-        }
-
-        // ক্যানভাস, ফেসবুক এবং ইউটিউব ৩ টিতেই ট্র্যান্সফর্ম অ্যানিমেশন পুশ করা
-        function applyTransform() {
-            const targets = ['.draggable-source'];
-            document.querySelectorAll(targets.join(',')).forEach(el => {
-                el.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
-            });
-        }
-
-        // পজিশন পুনরায় আগের জায়গায় (রিসেট) ফিরিয়ে নেওয়ার ফাংশন
-        function resetVideoPosition() {
-            currentX = 0;
-            currentY = 0;
-            currentScale = 1;
-            document.getElementById('video-scale-slider').value = 1;
-            applyTransform();
-        }
-    </script>
+    <div class="panel" id="panel-voice">
+      <div class="chips">
+        <div class="chip active" data-voice="normal">নরমাল</div>
+        <div class="chip" data-voice="deep">ডিপ ভয়েস</div>
+        <div class="chip" data-voice="chipmunk">চিপমাঙ্ক</div>
+        <div class="chip" data-voice="robot">রোবট</div>
+        <div class="chip" data-voice="echo">ইকো</div>
+        <div class="chip" data-voice="beep">🔇 বিপ (সেন্সর)</div>
+      </div>
+      <div class="row"><label>মাইক ভলিউম</label><input type="range" id="rMic" min="0" max="200" value="100"><span class="val" id="vMic">100</span></div>
+      <div class="hint">এই ইফেক্টগুলো আপনার মাইকের আওয়াজের ওপর প্রয়োগ হয়। ভিডিও সোর্স ব্যবহার করলে ভিডিওর নিজের সাউন্ডেও একই ইফেক্ট প্রয়োগ হবে — দুটো একসাথে মিশে যাবে।</div>
+    </div>
+
+    <div class="panel" id="panel-overlay">
+      <div class="row"><label>বর্ডার</label>
+        <div class="chips" style="margin:0;"><div class="chip" id="toggleBorder">চালু/বন্ধ</div></div>
+      </div>
+      <div class="row"><label>ব্যাজ/লোগো টেক্সট</label>
+        <div class="chips" style="margin:0;"><div class="chip" id="toggleBadge">চালু/বন্ধ</div></div>
+      </div>
+      <input class="textinput" id="overlayTextInput" placeholder="স্ক্রিনে যে টেক্সট দেখাবেন (যেমন: LIVE NOW)">
+      <div class="hint">টেক্সট লেখার পর সেটাও লোগোর মতোই সরাসরি প্রিভিউ স্ক্রিনে আঙুল দিয়ে টেনে জায়গা বদলাতে এবং দুই আঙুল দিয়ে চেপে ছোট-বড় করতে পারবেন।</div>
+
+      <div class="btnrow">
+        <button class="btn primary" id="pickLogoBtn">🖼️ গ্যালারি থেকে লোগো যোগ করুন</button>
+        <button class="btn" id="removeLogoBtn">লোগো সরান</button>
+      </div>
+      <div class="hint">লোগো যোগ করার পর সরাসরি প্রিভিউ স্ক্রিনে আঙুল দিয়ে টেনে জায়গা ঠিক করুন, দুই আঙুল দিয়ে চেপে ছোট-বড় করুন। রেকর্ডিং ও ছবিতেও থাকবে।</div>
+      <input type="file" id="logoFileInput" accept="image/*" style="display:none;">
+    </div>
+
+    <div class="panel" id="panel-source">
+      <div class="btnrow">
+        <button class="btn primary" id="pickVideoBtn">🎞️ গ্যালারি থেকে ভিডিও বাছাই</button>
+        <button class="btn" id="backToCamBtn">📷 ক্যামেরায় ফিরুন</button>
+      </div>
+      <input type="file" id="videoFileInput" accept="video/*" style="display:none;">
+
+      <div class="divider"></div>
+
+      <label style="font-size:12.5px; color:var(--text-dim); display:block; margin-bottom:8px;">অথবা OBS-এর Media Source-এর মতো সরাসরি লিংক দিয়ে যোগ করুন:</label>
+      <input class="textinput" id="videoUrlInput" placeholder="সরাসরি ভিডিও লিংক (.mp4/.webm URL)">
+      <button class="btn primary" style="width:100%; margin-bottom:10px;" id="loadVideoUrlBtn">🔗 লিংক থেকে লোড করুন</button>
+
+      <div class="hint">✅ ভিডিওর নিজের সাউন্ড এখন শোনা যাবে, আপনার মাইকের সাউন্ডের সাথে মিশে যাবে, এবং "ভয়েস" ট্যাবে যে ইফেক্ট (ডিপ/চিপমাঙ্ক/রোবট/ইকো/বিপ) বাছাই করবেন সেটা মাইক ও ভিডিওর সাউন্ড দুটোতেই একসাথে প্রয়োগ হবে — সব মিলিয়ে রেকর্ডিং-এ যুক্ত হবে।<br>⚠️ এই বক্সে শুধু সরাসরি .mp4/.webm ভিডিও ফাইলের URL কাজ করবে (CORS অনুমতি লাগবে)।</div>
+
+      <div class="divider"></div>
+
+      <label style="font-size:12.5px; color:var(--text-dim); display:block; margin-bottom:8px;">🌐 ওয়েব সোর্স (যেকোনো ওয়েবসাইট/ইউটিউব/ফেসবুক লিংক — যেমন স্ক্রিনশটে দেখানো "Web" সোর্স):</label>
+      <input class="textinput" id="webUrlInput" placeholder="URL — https://...">
+      <input class="textinput" id="webTitleInput" placeholder="Title (ঐচ্ছিক — স্ক্রিনে টেক্সট হিসেবে দেখাবে)">
+      <div class="btnrow">
+        <button class="btn primary" id="addWebSourceBtn">➕ যোগ করুন</button>
+        <button class="btn" id="removeWebSourceBtn">সোর্স সরান</button>
+      </div>
+      <div class="hint">ইউটিউব/ফেসবুক লিংক দিলে প্লেয়ার হিসেবে দেখাবে। সরাসরি .mp4/.webm লিংক দিলে ফিল্টার+রেকর্ডিং সহ কাজ করবে। অন্য যেকোনো ওয়েবসাইট লিংক (যেমন আপনার নিজের শপ) প্রিভিউতে লাইভ দেখাবে, কিন্তু ব্রাউজারের নিরাপত্তা নীতির কারণে সেটা ⚠️ রেকর্ডিং বা ফিল্টারে যুক্ত হবে না — সেটা রেকর্ড করতে হলে "🖥️ স্ক্রিন শেয়ার" ব্যবহার করুন (ওই ওয়েবসাইট আলাদা ট্যাবে খুলে শেয়ার করুন)।</div>
+    </div>
+
+    <div class="panel" id="panel-stream">
+      <input class="textinput" id="rtmpUrl" placeholder="RTMP URL (যেমন: rtmp://a.rtmp.youtube.com/live2)">
+      <input class="textinput" id="rtmpKey" placeholder="Stream Key">
+      <input class="textinput" id="relayWsUrl" value="wss://live-12nb.onrender.com" placeholder="রিলে সার্ভার (যেমন: wss://khan-sports-relay.onrender.com)">
+      <button class="btn primary" style="width:100%; margin-bottom:10px;" id="liveBtn">🔴 লাইভ শুরু করুন</button>
+      <div class="hint" id="liveHint">নিজের ব্যাকএন্ড রিলে সার্ভার বসিয়ে এখানে তার ঠিকানা দিন — এটাই আপনার ভিডিও নিয়ে আসল RTMP-তে কনভার্ট করে YouTube/Facebook-এ পাঠাবে। সার্ভার না থাকলে এই বাটন কাজ করবে না।</div>
+      <button class="btn" style="width:100%;" id="saveRtmp">সংরক্ষণ করুন</button>
+    </div>
+  </div>
+
+  <div class="rec-dot" id="liveDot" style="position:fixed; top:60px; right:14px; display:none; align-items:center; gap:6px; background:rgba(229,72,77,.9); padding:5px 10px; border-radius:20px; font-size:11px; z-index:50;">🔴 <span id="liveTime">00:00</span></div>
+
+  <div class="actionbar">
+    <button class="side-btn" id="switchCamBtn"><div class="ic">🔄</div>ক্যামেরা</button>
+    <button class="side-btn" id="screenShareBtn"><div class="ic">🖥️</div>স্ক্রিন</button>
+    <div class="shutter" id="recordBtn"></div>
+    <button class="side-btn" id="snapBtn"><div class="ic">📸</div>ছবি</button>
+  </div>
+
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const stage=$('stage'), video=$('video'), fCanvas=$('filterCanvas'), fCtx=fCanvas.getContext('2d');
+
+let stream=null, screenStream=null, videoFileURL=null, loopStarted=false, corsWarned=false;
+let currentSourceMode='none'; // 'camera' | 'screen' | 'video'
+let audioCtx=null, micSource=null, audioSourceStream=null, currentFacing='user';
+let videoElSource=null, videoAudioGain=null;
+let mediaRecorder=null, recordedChunks=[], recStartTime=null, recTimerInt=null;
+let filters={brightness:100, contrast:100, saturate:100, warm:0, lut:'none'};
+let voiceMode='normal';
+let currentOsc=null;
+let showBorder=false, showBadge=false, overlayTextStr='';
+let logoImg=null, logoNaturalAspect=1, logoState={xRatio:0.5,yRatio:0.22,scale:0.28};
+let textState={xRatio:0.5,yRatio:0.92,scale:1};
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    $('panel-'+t.dataset.tab).classList.add('active');
+  };
+});
+
+// ---------- Shared video-ready handler (camera / screen / file / link) ----------
+video.onloadedmetadata=()=>{
+  fCanvas.width=video.videoWidth;
+  fCanvas.height=video.videoHeight;
+  ensureDrawLoop();
+};
+function ensureDrawLoop(){ if(!loopStarted){ loopStarted=true; drawLoop(); } }
+
+// ---------- Camera ----------
+async function startCamera(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: currentFacing, width:{ideal:1280}, height:{ideal:720} },
+      audio:true
+    });
+    currentSourceMode='camera';
+    disconnectVideoAudio();
+    hideWebSource();
+    $('modeBadge').classList.remove('on');
+    video.srcObject=stream;
+    $('placeholder').style.display='none';
+    $('statusText').textContent='লাইভ প্রিভিউ চালু';
+    setupAudioGraph(stream);
+  }catch(e){
+    $('statusText').textContent='পারমিশন দেওয়া হয়নি';
+    alert('ক্যামেরা/মাইক্রোফোন অ্যাক্সেস দরকার। ব্রাউজার সেটিংস থেকে পারমিশন চেক করুন।\n\n('+e.message+')');
+  }
+}
+$('startBtn').onclick=startCamera;
+$('backToCamBtn').onclick=()=>{ if(currentSourceMode!=='camera') stopAltSource(); };
+
+$('switchCamBtn').onclick=async ()=>{
+  if(currentSourceMode!=='camera'){ alert('আগে ক্যামেরা মোডে ফিরুন।'); return; }
+  if(!stream) return;
+  currentFacing = currentFacing==='user' ? 'environment' : 'user';
+  stream.getTracks().forEach(t=>t.stop());
+  await startCamera();
+};
+
+// ---------- Screen share ----------
+async function toggleScreenShare(){
+  if(currentSourceMode==='screen'){ stopAltSource(); return; }
+  if(!navigator.mediaDevices.getDisplayMedia){
+    alert('এই ব্রাউজারে স্ক্রিন শেয়ার সাপোর্ট নেই। সর্বশেষ Chrome ব্যবহার করুন।');
+    return;
+  }
+  try{
+    screenStream=await navigator.mediaDevices.getDisplayMedia({ video:{cursor:'always'}, audio:false });
+  }catch(e){ return; }
+  currentSourceMode='screen';
+  disconnectVideoAudio();
+  hideWebSource();
+  video.srcObject=screenStream;
+  $('placeholder').style.display='none';
+  $('modeBadge').textContent='🖥️ স্ক্রিন শেয়ার চলছে';
+  $('modeBadge').classList.add('on');
+  $('screenShareBtn').classList.add('sharing');
+  $('statusText').textContent='স্ক্রিন শেয়ার চালু';
+  screenStream.getVideoTracks()[0].onended=()=>stopAltSource();
+  await ensureMicForAltSource();
+}
+$('screenShareBtn').onclick=toggleScreenShare;
+$('startScreenBtnPh').onclick=toggleScreenShare;
+
+// ---------- Gallery video / link source (audio from the video itself is captured too) ----------
+function enterVideoSourceCommon(){
+  hideWebSource();
+  currentSourceMode='video';
+  $('placeholder').style.display='none';
+  $('modeBadge').textContent='🎞️ ভিডিও সোর্স চলছে';
+  $('modeBadge').classList.add('on');
+  $('screenShareBtn').classList.remove('sharing');
+  $('statusText').textContent='ভিডিও সোর্স চালু';
+  connectVideoAudio();
+  ensureMicForAltSource();
+}
+function loadVideoFile(file){
+  if(!file) return;
+  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
+  if(videoFileURL){ URL.revokeObjectURL(videoFileURL); }
+  videoFileURL=URL.createObjectURL(file);
+  video.srcObject=null;
+  video.crossOrigin='anonymous';
+  video.src=videoFileURL;
+  video.loop=true;
+  video.play().catch(()=>{});
+  enterVideoSourceCommon();
+}
+function loadVideoUrl(url){
+  if(!url) return;
+  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
+  if(videoFileURL){ URL.revokeObjectURL(videoFileURL); videoFileURL=null; }
+  video.srcObject=null;
+  video.crossOrigin='anonymous';
+  video.src=url;
+  video.loop=true;
+  corsWarned=false;
+  video.play().catch(err=>{
+    alert('ভিডিও লোড করা যায়নি। এটা সরাসরি .mp4/.webm ফাইলের লিংক কিনা এবং CORS অনুমতি আছে কিনা দেখুন।\n\n'+err.message);
+  });
+  enterVideoSourceCommon();
+}
+$('pickVideoBtn').onclick=()=>$('videoFileInput').click();
+$('startVideoBtnPh').onclick=()=>$('videoFileInput').click();
+$('videoFileInput').addEventListener('change', e=>loadVideoFile(e.target.files[0]));
+$('loadVideoUrlBtn').onclick=()=>loadVideoUrl($('videoUrlInput').value.trim());
+$('videoUrlInput').addEventListener('keydown', e=>{ if(e.key==='Enter') loadVideoUrl($('videoUrlInput').value.trim()); });
+
+// ---------- Web Source (YouTube / FB Video Fix) ----------
+const webOverlay=$('webOverlay');
+function loadWebUrl(url) {
+  if (!url) return;
+
+  // URL ঠিক করা
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+
+  // সরাসরি ভিডিও ফাইল হলে আগের রেকর্ডযোগ্য ক্যানভাস পাইপলাইনেই পাঠাই
+  if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)){ loadVideoUrl(url); return; }
+
+  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
+
+  // YouTube Link কে Embed Link এ কনভার্ট
+  if (url.includes("youtube.com/watch?v=")) {
+    let videoId = url.split("v=")[1].split("&")[0];
+    url = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1`;
+  }
+  if (url.includes("youtu.be/")) {
+    let videoId = url.split("youtu.be/")[1].split("?")[0];
+    url = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1`;
+  }
+
+  // FB Video Link কে Embed Link এ কনভার্ট
+  if (url.includes("facebook.com") && url.includes("/videos/")) {
+    url = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&autoplay=true&mute=1`;
+  }
+
+  // iframe রিসেট করা
+  webOverlay.src = 'about:blank';
+
+  setTimeout(() => {
+    webOverlay.src = url;
+    webOverlay.classList.add('on');
+    currentSourceMode = 'web';
+    $('placeholder').style.display = 'none';
+    $('screenShareBtn').classList.remove('sharing');
+    $('modeBadge').textContent = '🌐 Web Source চলছে (রেকর্ডিং-এ যুক্ত হবে না)';
+    $('modeBadge').classList.add('on');
+    $('statusText').textContent = 'ওয়েব সোর্স চালু';
+    ensureMicForAltSource();
+  }, 200); // 100 থেকে 200 করলাম, লোড হতে সময় লাগে
+}
+function addWebSource(){
+  loadWebUrl($('webUrlInput').value.trim());
+  const title=$('webTitleInput').value.trim();
+  if(title){ overlayTextStr=title; $('overlayTextInput').value=title; }
+}
+function hideWebSource(){
+  webOverlay.src='about:blank';
+  webOverlay.classList.remove('on');
+}
+function removeWebSource(){
+  hideWebSource();
+  if(currentSourceMode==='web') stopAltSource();
+}
+$('addWebSourceBtn').onclick=addWebSource;
+$('webUrlInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addWebSource(); });
+$('removeWebSourceBtn').onclick=removeWebSource;
+
+
+function stopAltSource(){
+  hideWebSource();
+  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
+  if(currentSourceMode==='video'){
+    video.pause(); video.removeAttribute('src'); video.load();
+    if(videoFileURL){ URL.revokeObjectURL(videoFileURL); videoFileURL=null; }
+    disconnectVideoAudio();
+  }
+  $('modeBadge').classList.remove('on');
+  $('screenShareBtn').classList.remove('sharing');
+  if(stream && stream.getVideoTracks().some(t=>t.readyState==='live')){
+    currentSourceMode='camera';
+    video.srcObject=stream;
+    $('statusText').textContent='লাইভ প্রিভিউ চালু';
+  } else {
+    currentSourceMode='none';
+    video.srcObject=null;
+    $('placeholder').style.display='flex';
+    $('statusText').textContent='ক্যামেরা বন্ধ';
+  }
+}
+
+// ---------- Draw loop (video + filters + overlays + logo, all baked into canvas) ----------
+function lutAdjust(){
+  let b=filters.brightness, c=filters.contrast, s=filters.saturate;
+  if(filters.lut==='cinematic'){ c+=15; s-=10; }
+  if(filters.lut==='vivid'){ s+=40; c+=10; }
+  if(filters.lut==='bw'){ s=0; c+=10; }
+  return {b,c,s};
+}
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function getLogoRect(){
+  if(!logoImg) return null;
+  const w=fCanvas.width*logoState.scale, h=w/logoNaturalAspect;
+  const x=logoState.xRatio*fCanvas.width - w/2, y=logoState.yRatio*fCanvas.height - h/2;
+  return {x,y,w,h};
+}
+function getTextRect(){
+  if(!overlayTextStr) return null;
+  const fontSize=Math.round(fCanvas.width*0.05*textState.scale);
+  fCtx.font=`bold ${fontSize}px Arial`;
+  const w=fCtx.measureText(overlayTextStr).width;
+  const h=fontSize*1.3;
+  const x=textState.xRatio*fCanvas.width - w/2, y=textState.yRatio*fCanvas.height - h/2;
+  return {x,y,w,h,fontSize};
+}
+function drawLoop(){
+  if(!video.videoWidth){ requestAnimationFrame(drawLoop); return; }
+  const {b,c,s}=lutAdjust();
+  let hue=filters.lut==='cool'?-10:(filters.warm>0?filters.warm*0.6:0);
+  let sepia=filters.warm>0?Math.min(filters.warm,50)/150:0;
+  fCtx.filter=`brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${hue}deg) sepia(${sepia})`;
+  fCtx.save();
+  if(currentSourceMode==='camera'){ fCtx.translate(fCanvas.width,0); fCtx.scale(-1,1); }
+  try{
+    fCtx.drawImage(video,0,0,fCanvas.width,fCanvas.height);
+  }catch(err){
+    if(!corsWarned){ corsWarned=true; alert('এই ভিডিও লিংকে CORS অনুমতি নেই, তাই ফিল্টার/রেকর্ডিং প্রয়োগ করা যাচ্ছে না। অন্য সরাসরি ভিডিও লিংক ব্যবহার করুন বা গ্যালারি থেকে ফাইল বাছাই করুন।'); }
+  }
+  fCtx.restore();
+
+  fCtx.filter='none';
+  if(showBorder){
+    fCtx.strokeStyle='#f5a623'; fCtx.lineWidth=Math.max(4,fCanvas.width*0.006);
+    const inset=fCanvas.width*0.015;
+    roundRectPath(fCtx,inset,inset,fCanvas.width-inset*2,fCanvas.height-inset*2,fCanvas.width*0.02);
+    fCtx.stroke();
+  }
+  if(showBadge){
+    const text='KHAN SPORTS';
+    fCtx.font=`bold ${Math.round(fCanvas.width*0.032)}px Arial`;
+    const tw=fCtx.measureText(text).width;
+    const padX=fCanvas.width*0.02, bx=fCanvas.width*0.04, by=fCanvas.height*0.04, bh=fCanvas.width*0.055, bw=tw+padX*2;
+    fCtx.fillStyle='rgba(13,17,23,0.75)'; roundRectPath(fCtx,bx,by,bw,bh,bh/2); fCtx.fill();
+    fCtx.strokeStyle='#f5a623'; fCtx.lineWidth=2; roundRectPath(fCtx,bx,by,bw,bh,bh/2); fCtx.stroke();
+    fCtx.fillStyle='#f5a623'; fCtx.textBaseline='middle'; fCtx.fillText(text,bx+padX,by+bh/2+1);
+  }
+  if(overlayTextStr){
+    const r=getTextRect();
+    fCtx.font=`bold ${r.fontSize}px Arial`;
+    fCtx.textAlign='center'; fCtx.textBaseline='middle';
+    const cx=r.x+r.w/2, cy=r.y+r.h/2;
+    fCtx.strokeStyle='rgba(0,0,0,0.8)'; fCtx.lineWidth=Math.round(r.fontSize*0.18);
+    fCtx.strokeText(overlayTextStr,cx,cy);
+    fCtx.fillStyle='#fff'; fCtx.fillText(overlayTextStr,cx,cy);
+    fCtx.textAlign='left'; fCtx.textBaseline='alphabetic';
+  }
+  if(logoImg){
+    const r=getLogoRect();
+    fCtx.drawImage(logoImg,r.x,r.y,r.w,r.h);
+  }
+  requestAnimationFrame(drawLoop);
+}
+
+// ---------- Filter controls ----------
+function bindSlider(rangeId,valId,key){
+  const r=$(rangeId), v=$(valId);
+  r.oninput=()=>{ filters[key]=Number(r.value); v.textContent=r.value; };
+}
+bindSlider('rBrightness','vBrightness','brightness');
+bindSlider('rContrast','vContrast','contrast');
+bindSlider('rSaturate','vSaturate','saturate');
+bindSlider('rWarm','vWarm','warm');
+document.querySelectorAll('[data-lut]').forEach(chip=>{
+  chip.onclick=()=>{
+    document.querySelectorAll('[data-lut]').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active'); filters.lut=chip.dataset.lut;
+  };
+});
+
+// ---------- Overlay controls ----------
+$('toggleBorder').onclick=()=>{ showBorder=!showBorder; $('toggleBorder').classList.toggle('active',showBorder); };
+$('toggleBadge').onclick=()=>{ showBadge=!showBadge; $('toggleBadge').classList.toggle('active',showBadge); };
+$('overlayTextInput').addEventListener('keydown', e=>{ if(e.key==='Enter') overlayTextStr=$('overlayTextInput').value; });
+
+// ---------- Logo: pick from gallery + drag/pinch on canvas ----------
+$('pickLogoBtn').onclick=()=>$('logoFileInput').click();
+$('logoFileInput').addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const img=new Image();
+  img.onload=()=>{ logoImg=img; logoNaturalAspect=img.width/img.height; logoState={xRatio:0.5,yRatio:0.22,scale:0.28}; };
+  img.src=URL.createObjectURL(file);
+});
+$('removeLogoBtn').onclick=()=>{ logoImg=null; };
+
+// Both the logo image and the overlay text are independently draggable/pinchable on the canvas.
+let dragTarget=null; // 'logo' | 'text' | null
+let dragging=false, pinching=false, dragStart={x:0,y:0}, dragStartState=null, pinchStartDist=0, pinchStartScale=1;
+function canvasPointFromTouch(t){
+  const rect=fCanvas.getBoundingClientRect();
+  return { x:(t.clientX-rect.left)*(fCanvas.width/rect.width), y:(t.clientY-rect.top)*(fCanvas.height/rect.height) };
+}
+function midpointFromTouches(ts){
+  return { x:(ts[0].clientX+ts[1].clientX)/2, y:(ts[0].clientY+ts[1].clientY)/2, clientX:(ts[0].clientX+ts[1].clientX)/2, clientY:(ts[0].clientY+ts[1].clientY)/2 };
+}
+function touchDist(ts){ const dx=ts[0].clientX-ts[1].clientX, dy=ts[0].clientY-ts[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
+function clamp(v,min,max){ return Math.min(max,Math.max(min,v)); }
+function pointInRect(p,r){ return r && p.x>=r.x && p.x<=r.x+r.w && p.y>=r.y && p.y<=r.y+r.h; }
+function stateFor(target){ return target==='logo'?logoState:textState; }
+function rectFor(target){ return target==='logo'?getLogoRect():getTextRect(); }
+function pickTarget(p){
+  if(logoImg && pointInRect(p,getLogoRect())) return 'logo';
+  if(overlayTextStr && pointInRect(p,getTextRect())) return 'text';
+  return null;
+}
+
+stage.addEventListener('touchstart', e=>{
+  if(e.touches.length===1){
+    const p=canvasPointFromTouch(e.touches[0]);
+    const target=pickTarget(p);
+    if(target){ dragTarget=target; dragging=true; dragStart=p; dragStartState={...stateFor(target)}; e.preventDefault(); }
+  } else if(e.touches.length===2){
+    const mid=canvasPointFromTouch(midpointFromTouches(e.touches));
+    const target=pickTarget(mid);
+    if(target){
+      dragTarget=target; dragging=false; pinching=true;
+      pinchStartDist=touchDist(e.touches); pinchStartScale=stateFor(target).scale;
+      e.preventDefault();
+    }
+  }
+}, {passive:false});
+stage.addEventListener('touchmove', e=>{
+  if(!dragTarget) return;
+  const st=stateFor(dragTarget);
+  if(dragging && e.touches.length===1){
+    const p=canvasPointFromTouch(e.touches[0]);
+    st.xRatio=clamp(dragStartState.xRatio+(p.x-dragStart.x)/fCanvas.width,0,1);
+    st.yRatio=clamp(dragStartState.yRatio+(p.y-dragStart.y)/fCanvas.height,0,1);
+    e.preventDefault();
+  } else if(pinching && e.touches.length===2){
+    const dist=touchDist(e.touches);
+    const maxScale = dragTarget==='logo' ? 0.9 : 3.5;
+    const minScale = dragTarget==='logo' ? 0.08 : 0.4;
+    st.scale=clamp(pinchStartScale*(dist/pinchStartDist),minScale,maxScale);
+    e.preventDefault();
+  }
+}, {passive:false});
+stage.addEventListener('touchend', e=>{
+  if(e.touches.length===0){ dragging=false; pinching=false; dragTarget=null; }
+  else if(e.touches.length===1){ pinching=false; }
+});
+
+// ---------- RTMP save (local only) ----------
+$('saveRtmp').onclick=()=>{ alert('সংরক্ষণ করা হয়েছে এই সেশনের জন্য। এখন "🔴 লাইভ শুরু করুন" চাপলে রিলে সার্ভারের মাধ্যমে সত্যিকারের লাইভ শুরু হবে (সার্ভার সেটআপ থাকলে)।'); };
+
+// ---------- Audio graph ----------
+// combinedInput: everything that should be voice-effected (mic + video's own audio) is mixed here first,
+// then the SAME selected effect (deep/chipmunk/robot/echo/beep) is applied to that combined signal.
+// destNode: the final mixed+effected signal, used for recording.
+function ensureAudioCtx(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(!destNode) destNode=audioCtx.createMediaStreamDestination();
+  if(!combinedInput) combinedInput=audioCtx.createGain();
+}
+function setupAudioGraph(srcStream){
+  ensureAudioCtx();
+  audioSourceStream=srcStream;
+  try{ if(micSource) micSource.disconnect(); }catch(e){}
+  micSource=audioCtx.createMediaStreamSource(srcStream);
+  micSource.connect(combinedInput);
+  buildVoiceChain();
+}
+async function ensureMicForAltSource(){
+  if(audioSourceStream && audioSourceStream.getAudioTracks().some(t=>t.readyState==='live')) return;
+  try{ const micOnly=await navigator.mediaDevices.getUserMedia({audio:true}); setupAudioGraph(micOnly); }
+  catch(e){ console.warn('মাইক্রোফোন পাওয়া যায়নি', e); }
+}
+
+// Video element's OWN audio (used only in 'video' source mode): mixed into combinedInput,
+// so it gets the SAME voice effect as the mic, then flows to destNode/speakers from there.
+function connectVideoAudio(){
+  ensureAudioCtx();
+  if(!videoElSource){
+    videoElSource=audioCtx.createMediaElementSource(video);
+    videoAudioGain=audioCtx.createGain();
+    videoAudioGain.gain.value=1;
+    videoElSource.connect(videoAudioGain);
+  }
+  try{ videoAudioGain.disconnect(); }catch(e){}
+  videoAudioGain.connect(combinedInput);
+}
+function disconnectVideoAudio(){
+  if(videoAudioGain){ try{ videoAudioGain.disconnect(); }catch(e){} }
+}
+
+let gainNode, delayNode, feedbackNode, filterNode, wetGain, dryGain, destNode, combinedInput;
+function connectFinal(node){
+  // Recording only — NOT routed to the phone speaker. Playing processed mic audio out of the
+  // speaker while the mic is still listening causes an acoustic feedback loop (that "চি চি" noise).
+  node.connect(destNode);
+}
+function buildVoiceChain(){
+  ensureAudioCtx();
+  try{ combinedInput.disconnect(); }catch(e){}
+  if(currentOsc){ try{currentOsc.stop();}catch(e){} try{currentOsc.disconnect();}catch(e){} currentOsc=null; }
+  gainNode=audioCtx.createGain();
+  gainNode.gain.value=($('rMic')? Number($('rMic').value)/100 : 1);
+  delayNode=audioCtx.createDelay(1.0); feedbackNode=audioCtx.createGain();
+  wetGain=audioCtx.createGain(); dryGain=audioCtx.createGain();
+  combinedInput.connect(gainNode);
+
+  if(voiceMode==='deep'){
+    filterNode=audioCtx.createBiquadFilter(); filterNode.type='lowshelf'; filterNode.frequency.value=300; filterNode.gain.value=8;
+    gainNode.connect(filterNode); connectFinal(filterNode);
+  } else if(voiceMode==='chipmunk'){
+    filterNode=audioCtx.createBiquadFilter(); filterNode.type='highshelf'; filterNode.frequency.value=1200; filterNode.gain.value=10;
+    gainNode.connect(filterNode); connectFinal(filterNode);
+  } else if(voiceMode==='robot'){
+    const shaper=audioCtx.createWaveShaper();
+    const curve=new Float32Array(65536);
+    for(let i=0;i<65536;i++){ const x=i/32768-1; curve[i]=Math.sign(x)*Math.pow(Math.abs(x),0.6); }
+    shaper.curve=curve;
+    gainNode.connect(shaper); connectFinal(shaper);
+  } else if(voiceMode==='echo'){
+    delayNode.delayTime.value=0.28; feedbackNode.gain.value=0.35;
+    gainNode.connect(dryGain); connectFinal(dryGain);
+    gainNode.connect(delayNode); delayNode.connect(feedbackNode); feedbackNode.connect(delayNode);
+    delayNode.connect(wetGain); wetGain.gain.value=0.5; connectFinal(wetGain);
+  } else if(voiceMode==='beep'){
+    const osc=audioCtx.createOscillator(); osc.type='square'; osc.frequency.value=1000;
+    const beepGain=audioCtx.createGain(); beepGain.gain.value=0.25;
+    osc.connect(beepGain); connectFinal(beepGain); osc.start(); currentOsc=osc;
+  } else {
+    connectFinal(gainNode);
+  }
+}
+$('rMic').oninput=()=>{ if(gainNode) gainNode.gain.value=Number($('rMic').value)/100; $('vMic').textContent=$('rMic').value; };
+document.querySelectorAll('[data-voice]').forEach(chip=>{
+  chip.onclick=()=>{
+    document.querySelectorAll('[data-voice]').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active'); voiceMode=chip.dataset.voice;
+    if(audioCtx) buildVoiceChain();
+  };
+});
+
+// ---------- Recording ----------
+$('recordBtn').onclick=()=>{
+  if(currentSourceMode==='none'){ alert('আগে একটা সোর্স (ক্যামেরা/স্ক্রিন/ভিডিও) চালু করুন।'); return; }
+  if(currentSourceMode==='web'){ alert('ওয়েব সোর্স (আইফ্রেম) সরাসরি রেকর্ড করা যায় না, ব্রাউজারের নিরাপত্তা নীতির কারণে। এই ওয়েবসাইটটা রেকর্ড করতে চাইলে "🖥️ স্ক্রিন শেয়ার" ব্যবহার করুন।'); return; }
+  if(mediaRecorder && mediaRecorder.state==='recording'){ stopRecording(); } else { startRecording(); }
+};
+function startRecording(){
+  const canvasStream=fCanvas.captureStream(30);
+  let audioTrack=null;
+  if(destNode) audioTrack=destNode.stream.getAudioTracks()[0];
+  else if(audioSourceStream) audioTrack=audioSourceStream.getAudioTracks()[0];
+  const combined=new MediaStream([...canvasStream.getVideoTracks(), audioTrack].filter(Boolean));
+  recordedChunks=[];
+  mediaRecorder=new MediaRecorder(combined, { mimeType: pickMime() });
+  mediaRecorder.ondataavailable=e=>{ if(e.data.size>0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop=saveRecording;
+  mediaRecorder.start();
+  $('recordBtn').classList.add('recording'); $('recDot').classList.add('on');
+  recStartTime=Date.now(); recTimerInt=setInterval(updateRecTime,500);
+  $('statusText').innerHTML='<span style="color:var(--danger)">● রেকর্ডিং চলছে</span>';
+}
+function stopRecording(){
+  mediaRecorder.stop();
+  $('recordBtn').classList.remove('recording'); $('recDot').classList.remove('on'); clearInterval(recTimerInt);
+  $('statusText').textContent = currentSourceMode==='camera' ? 'লাইভ প্রিভিউ চালু' : (currentSourceMode==='screen' ? 'স্ক্রিন শেয়ার চালু' : 'ভিডিও সোর্স চালু');
+}
+function updateRecTime(){
+  const secs=Math.floor((Date.now()-recStartTime)/1000);
+  $('recTime').textContent=`${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`;
+}
+function pickMime(){
+  const options=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(const o of options){ if(MediaRecorder.isTypeSupported(o)) return o; }
+  return '';
+}
+function saveRecording(){
+  const blob=new Blob(recordedChunks,{type:'video/webm'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`khan-sports-${Date.now()}.webm`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ---------- Go Live (sends video/audio chunks to YOUR relay server, which pushes real RTMP) ----------
+let relayWs=null, liveRecorder=null, liveStartTime=null, liveTimerInt=null;
+function startLive(){
+  if(currentSourceMode==='none'){ alert('আগে একটা সোর্স (ক্যামেরা/স্ক্রিন/ভিডিও) চালু করুন।'); return; }
+  if(currentSourceMode==='web'){ alert('ওয়েব সোর্স মোডে লাইভ যাওয়া যায় না — এটা রেকর্ডিং/ক্যানভাসে যুক্ত হয় না। ক্যামেরা বা স্ক্রিন শেয়ার ব্যবহার করুন।'); return; }
+  const wsUrl=$('relayWsUrl').value.trim();
+  const rtmpBase=$('rtmpUrl').value.trim();
+  const rtmpKey=$('rtmpKey').value.trim();
+  if(!wsUrl){ alert('রিলে সার্ভারের ঠিকানা দিন (যেমন: wss://your-relay.onrender.com)।'); return; }
+  if(!rtmpBase || !rtmpKey){ alert('RTMP URL এবং Stream Key দিন।'); return; }
+
+  $('liveBtn').disabled=true; $('liveBtn').textContent='⏳ কানেক্ট হচ্ছে...';
+  try{ relayWs=new WebSocket(wsUrl); }
+  catch(e){ alert('রিলে সার্ভারের ঠিকানাটা সঠিক নয়।'); resetLiveButton(); return; }
+  relayWs.binaryType='arraybuffer';
+
+  relayWs.onopen=()=>{
+    const fullRtmp = rtmpBase.replace(/\/$/,'') + '/' + rtmpKey.replace(/^\//,'');
+    relayWs.send(JSON.stringify({ type:'start', rtmpUrl: fullRtmp }));
+
+    const canvasStream=fCanvas.captureStream(30);
+    let audioTrack=null;
+    if(destNode) audioTrack=destNode.stream.getAudioTracks()[0];
+    else if(audioSourceStream) audioTrack=audioSourceStream.getAudioTracks()[0];
+    const combined=new MediaStream([...canvasStream.getVideoTracks(), audioTrack].filter(Boolean));
+
+    liveRecorder=new MediaRecorder(combined, { mimeType: pickMime(), videoBitsPerSecond: 2500000, audioBitsPerSecond: 128000 });
+    liveRecorder.ondataavailable=e=>{
+      if(e.data.size>0 && relayWs && relayWs.readyState===WebSocket.OPEN){
+        e.data.arrayBuffer().then(buf=>{ if(relayWs && relayWs.readyState===WebSocket.OPEN) relayWs.send(buf); });
+      }
+    };
+    liveRecorder.start(500); // প্রতি ৫০০ মিলিসেকেন্ডে একটা চাংক পাঠানো হয়
+
+    $('liveBtn').disabled=false;
+    $('liveBtn').textContent='⏹️ লাইভ বন্ধ করুন';
+    $('liveBtn').classList.remove('primary');
+    $('liveDot').style.display='flex';
+    liveStartTime=Date.now();
+    liveTimerInt=setInterval(()=>{
+      const secs=Math.floor((Date.now()-liveStartTime)/1000);
+      $('liveTime').textContent=`${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`;
+    },1000);
+    $('statusText').innerHTML='<span style="color:var(--danger)">🔴 লাইভ চলছে</span>';
+  };
+  relayWs.onmessage=(ev)=>{
+    try{
+      const msg=JSON.parse(ev.data);
+      if(msg.type==='error'){ alert('রিলে সার্ভার এরর: '+msg.message); stopLive(); }
+      if(msg.type==='ended'){ stopLive(); }
+    }catch(e){}
+  };
+  relayWs.onerror=()=>{
+    alert('রিলে সার্ভারে কানেক্ট করা যায়নি। ঠিকানাটা সঠিক কিনা, সার্ভার চালু আছে কিনা (Render ফ্রি টিয়ার হলে জাগতে একটু সময় লাগতে পারে) দেখুন।');
+    resetLiveButton();
+  };
+  relayWs.onclose=()=>{ if(liveRecorder) stopLive(); else resetLiveButton(); };
+}
+function stopLive(){
+  if(liveRecorder && liveRecorder.state!=='inactive'){ try{ liveRecorder.stop(); }catch(e){} }
+  liveRecorder=null;
+  if(relayWs){
+    try{ if(relayWs.readyState===WebSocket.OPEN) relayWs.send(JSON.stringify({type:'stop'})); }catch(e){}
+    try{ relayWs.close(); }catch(e){}
+  }
+  relayWs=null;
+  clearInterval(liveTimerInt);
+  $('liveDot').style.display='none';
+  resetLiveButton();
+  $('statusText').textContent = currentSourceMode==='camera' ? 'লাইভ প্রিভিউ চালু' : (currentSourceMode==='screen' ? 'স্ক্রিন শেয়ার চালু' : 'ভিডিও সোর্স চালু');
+}
+function resetLiveButton(){
+  $('liveBtn').disabled=false;
+  $('liveBtn').textContent='🔴 লাইভ শুরু করুন';
+  $('liveBtn').classList.add('primary');
+}
+$('liveBtn').onclick=()=>{ if(relayWs || liveRecorder) stopLive(); else startLive(); };
+
+// ---------- Snapshot ----------
+$('snapBtn').onclick=()=>{
+  if(!video.videoWidth){ alert('আগে একটা সোর্স চালু করুন।'); return; }
+  const link=document.createElement('a');
+  link.download=`khan-sports-${Date.now()}.png`; link.href=fCanvas.toDataURL('image/png'); link.click();
+};
+</script>
 </body>
 </html>
