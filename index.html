@@ -188,7 +188,7 @@
         <button class="btn primary" id="addWebSourceBtn">➕ যোগ করুন</button>
         <button class="btn" id="removeWebSourceBtn">সোর্স সরান</button>
       </div>
-      <div class="hint">ইউটিউব/ফেসবুক লিংক দিলে প্লেয়ার হিসেবে দেখাবে। সরাসরি .mp4/.webm লিংক দিলে ফিল্টার+রেকর্ডিং সহ কাজ করবে। অন্য যেকোনো ওয়েবসাইট লিংক (যেমন আপনার নিজের শপ) প্রিভিউতে লাইভ দেখাবে, কিন্তু ব্রাউজারের নিরাপত্তা নীতির কারণে সেটা ⚠️ রেকর্ডিং বা ফিল্টারে যুক্ত হবে না — সেটা রেকর্ড করতে হলে "🖥️ স্ক্রিন শেয়ার" ব্যবহার করুন (ওই ওয়েবসাইট আলাদা ট্যাবে খুলে শেয়ার করুন)।</div>
+      <div class="hint">ইউটিউব/ফেসবুক লিংক দিলে প্লেয়ার হিসেবে দেখাবে। সরাসরি .mp4/.webm লিংক দিলে ফিল্টার+রেকর্ডিং সহ কাজ করবে। অন্য যেকোনো ওয়েবসাইট লিংক (যেমন আপনার নিজের শপ) প্রিভিউতে লাইভ দেখাবে, কিন্তু ব্রাউজারের নিরাপত্তা নীতির কারণে সেটা ⚠️ রেকর্ডিং বা ফিল্টারে যুক্ত হবে না — মোবাইলে এটা রেকর্ড করার সরাসরি উপায় নেই (স্ক্রিন শেয়ার মোবাইল Chrome-এ কাজ করে না); বিকল্প হিসেবে ফোনের নিজস্ব স্ক্রিন রেকর্ডার অ্যাপ ব্যবহার করতে পারেন।</div>
     </div>
 
     <div class="panel" id="panel-stream">
@@ -277,16 +277,20 @@ $('switchCamBtn').onclick=async ()=>{
   await startCamera();
 };
 
-// ---------- Screen share ----------
+// ---------- Screen share (desktop Chrome/Edge only — Android Chrome does NOT implement this API,
+// it always rejects, no browser update fixes it; this is a platform limitation) ----------
 async function toggleScreenShare(){
   if(currentSourceMode==='screen'){ stopAltSource(); return; }
   if(!navigator.mediaDevices.getDisplayMedia){
-    alert('এই ব্রাউজারে স্ক্রিন শেয়ার সাপোর্ট নেই। সর্বশেষ Chrome ব্যবহার করুন।');
+    alert('মোবাইল Chrome-এ স্ক্রিন শেয়ার সাপোর্ট নেই — এটা শুধু কম্পিউটারের Chrome/Edge-এ কাজ করে, ব্রাউজার আপডেট করলেও ফোনে চালু হবে না। ফোনের বদলে "📷 ক্যামেরা" বা "🎞️ ভিডিও সোর্স" ব্যবহার করুন।');
     return;
   }
   try{
     screenStream=await navigator.mediaDevices.getDisplayMedia({ video:{cursor:'always'}, audio:false });
-  }catch(e){ return; }
+  }catch(e){
+    alert('মোবাইল Chrome-এ স্ক্রিন শেয়ার সাপোর্ট নেই — এটা শুধু কম্পিউটারের Chrome/Edge-এ কাজ করে। ফোনের বদলে "📷 ক্যামেরা" বা "🎞️ ভিডিও সোর্স" ব্যবহার করুন।');
+    return;
+  }
   currentSourceMode='screen';
   disconnectVideoAudio();
   hideWebSource();
@@ -621,8 +625,10 @@ async function ensureMicForAltSource(){
   catch(e){ console.warn('মাইক্রোফোন পাওয়া যায়নি', e); }
 }
 
-// Video element's OWN audio (used only in 'video' source mode): mixed into combinedInput,
-// so it gets the SAME voice effect as the mic, then flows to destNode/speakers from there.
+// Video element's OWN audio (used only in 'video' source mode): mixed into combinedInput so it
+// gets the SAME voice effect for recording/live, AND connected straight to the speakers so you can
+// actually hear it while previewing — this second connection is safe (no mic feedback risk) since
+// it's the video's own sound, not derived from the microphone.
 function connectVideoAudio(){
   ensureAudioCtx();
   if(!videoElSource){
@@ -632,7 +638,8 @@ function connectVideoAudio(){
     videoElSource.connect(videoAudioGain);
   }
   try{ videoAudioGain.disconnect(); }catch(e){}
-  videoAudioGain.connect(combinedInput);
+  videoAudioGain.connect(combinedInput);       // → recording/live (with the selected voice effect)
+  videoAudioGain.connect(audioCtx.destination); // → audible right now, through the phone speaker
 }
 function disconnectVideoAudio(){
   if(videoAudioGain){ try{ videoAudioGain.disconnect(); }catch(e){} }
@@ -691,7 +698,7 @@ document.querySelectorAll('[data-voice]').forEach(chip=>{
 // ---------- Recording ----------
 $('recordBtn').onclick=()=>{
   if(currentSourceMode==='none'){ alert('আগে একটা সোর্স (ক্যামেরা/স্ক্রিন/ভিডিও) চালু করুন।'); return; }
-  if(currentSourceMode==='web'){ alert('ওয়েব সোর্স (আইফ্রেম) সরাসরি রেকর্ড করা যায় না, ব্রাউজারের নিরাপত্তা নীতির কারণে। এই ওয়েবসাইটটা রেকর্ড করতে চাইলে "🖥️ স্ক্রিন শেয়ার" ব্যবহার করুন।'); return; }
+  if(currentSourceMode==='web'){ alert('ওয়েব সোর্স (আইফ্রেম) সরাসরি রেকর্ড করা যায় না, ব্রাউজারের নিরাপত্তা নীতির কারণে — মোবাইলে এর কোনো সরাসরি সমাধান নেই। ক্যামেরা বা "ভিডিও সোর্স" ব্যবহার করুন।'); return; }
   if(mediaRecorder && mediaRecorder.state==='recording'){ stopRecording(); } else { startRecording(); }
 };
 function startRecording(){
@@ -734,7 +741,7 @@ function saveRecording(){
 let relayWs=null, liveRecorder=null, liveStartTime=null, liveTimerInt=null;
 function startLive(){
   if(currentSourceMode==='none'){ alert('আগে একটা সোর্স (ক্যামেরা/স্ক্রিন/ভিডিও) চালু করুন।'); return; }
-  if(currentSourceMode==='web'){ alert('ওয়েব সোর্স মোডে লাইভ যাওয়া যায় না — এটা রেকর্ডিং/ক্যানভাসে যুক্ত হয় না। ক্যামেরা বা স্ক্রিন শেয়ার ব্যবহার করুন।'); return; }
+  if(currentSourceMode==='web'){ alert('ওয়েব সোর্স মোডে লাইভ যাওয়া যায় না — এটা রেকর্ডিং/ক্যানভাসে যুক্ত হয় না। ক্যামেরা বা ভিডিও সোর্স ব্যবহার করুন।'); return; }
   const wsUrl=$('relayWsUrl').value.trim();
   const rtmpBase=$('rtmpUrl').value.trim();
   const rtmpKey=$('rtmpKey').value.trim();
